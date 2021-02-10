@@ -1,6 +1,6 @@
 const networks: Record<string, LocalNetworkConfig> = {
   mainnet: {
-    contract: "https://whitelist.mirror.finance/columbus.json",
+    contract: "https://whitelist-dev.mirror.finance/columbus.json",
     mantle: "https://mantle.terra.dev/",
     stats: "https://graph.mirror.finance/graphql",
     shuttle: {
@@ -10,7 +10,7 @@ const networks: Record<string, LocalNetworkConfig> = {
     fee: { gasPrice: 0.0015, amount: 1000 }, // 0.001000 UST
   },
   testnet: {
-    contract: "https://whitelist.mirror.finance/tequila.json",
+    contract: "https://whitelist-dev.mirror.finance/tequila.json",
     mantle: "https://tequila-mantle.terra.dev/",
     stats: "https://tequila-graph.mirror.finance/graphql",
     shuttle: {
@@ -20,7 +20,7 @@ const networks: Record<string, LocalNetworkConfig> = {
     fee: { gasPrice: 0.15, amount: 150000 }, // 0.150000 UST
   },
   moonshine: {
-    contract: "https://whitelist.mirror.finance/moonshine.json",
+    contract: "https://whitelist-dev.mirror.finance/moonshine.json",
     mantle: "https://moonshine-mantle.terra.dev/",
     stats: "https://moonshine-graph.mirror.finance/graphql",
     shuttle: {
