@@ -1,13 +1,13 @@
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 import { useLocation } from "react-router-dom"
 import { isNil } from "ramda"
 
 import useNewContractMsg from "../terra/useNewContractMsg"
-import { COMMISSION, MAX_SPREAD, MIR, UUSD } from "../constants"
+import { COMMISSION, MAX_SPREAD, MIR, UST, UUSD } from "../constants"
 import Tooltip from "../lang/Tooltip.json"
-import { div, gt, isFinite } from "../libs/math"
-import { usePolling, useRefetch } from "../hooks"
-import { format, lookup, lookupSymbol } from "../libs/parse"
+import { div, gt, isFinite, times } from "../libs/math"
+import { useNetwork, usePolling, useRefetch } from "../hooks"
+import { dp, format, lookup, lookupSymbol } from "../libs/parse"
 import { decimal } from "../libs/parse"
 import { toAmount } from "../libs/parse"
 import useForm from "../libs/useForm"
@@ -26,15 +26,19 @@ import { TooltipIcon } from "../components/Tooltip"
 import PriceChart from "../containers/PriceChart"
 import { Type } from "../pages/Trade"
 import useTradeReceipt from "./receipts/useTradeReceipt"
+import useLimitOrderReceipt from "./receipts/useLimitOrderReceipt"
 import { toBase64 } from "../libs/formHelpers"
 import useSimulate from "./useSimulate"
 import useSelectAsset from "./useSelectAsset"
 import FormContainer from "./FormContainer"
 import FormIcon from "./FormIcon"
 import SetSlippageTolerance from "./SetSlippageTolerance"
+import ToggleLimitOrder from "./ToggleLimitOrder"
+import styles from "./TradeForm.module.scss"
 
 enum Key {
   token = "token",
+  target = "target",
   value1 = "value1",
   value2 = "value2",
 }
@@ -45,10 +49,15 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
 
   /* context */
   const { state } = useLocation<{ token: string }>()
+  const { limitOrder: limitOrderContract } = useNetwork()
   const { whitelist, getToken, getSymbol, toToken } = useContractsAddress()
   const { find } = useContract()
   useRefetch([priceKey, balanceKey])
   usePolling()
+
+  /* form:limit */
+  const limitOrderState = useState(false)
+  const [isLimitOrder] = limitOrderState
 
   /* form:slippage */
   const slippageState = useLocalStorage("slippage", "1")
@@ -60,22 +69,28 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
       : MAX_SPREAD
 
   /* form:validate */
-  const validate = ({ value1, value2, token }: Values<Key>) => {
+  const validate = ({ target, value1, value2, token }: Values<Key>) => {
     const token1 = { [Type.BUY]: UUSD, [Type.SELL]: token }[type]
     const token2 = { [Type.BUY]: token, [Type.SELL]: UUSD }[type]
     const symbol1 = getSymbol(token1)
     const symbol2 = getSymbol(token2)
     const max = find(balanceKey, token1)
+    const price = find(priceKey, token)
+    const targetRangeKey = { [Type.BUY]: "max", [Type.SELL]: "min" }[type]
 
     return {
       [Key.value1]: v.amount(value1, { symbol: symbol1, max }),
       [Key.value2]: !token ? "" : v.amount(value2, { symbol: symbol2 }),
       [Key.token]: v.required(token),
+      [Key.target]: !target
+        ? ""
+        : v.amount(target, { [targetRangeKey]: price }, "Target price"),
     }
   }
 
   /* form:hook */
   const initial = {
+    [Key.target]: "",
     [Key.value1]: "",
     [Key.value2]: "",
     [Key.token]: state?.token ?? getToken(MIR),
@@ -83,7 +98,7 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
 
   const form = useForm<Key>(initial, validate)
   const { values, setValue, setValues, getFields, attrs, invalid } = form
-  const { value1, value2, token } = values
+  const { value1, value2, token, target } = values
   const amount1 = toAmount(value1)
   const amount2 = toAmount(value2)
   const token1 = { [Type.BUY]: UUSD, [Type.SELL]: token }[type]
@@ -101,6 +116,11 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
     !value1 && value1Ref.current?.focus()
   }
 
+  /* clear target price on limit order change */
+  useEffect(() => {
+    setValues((values) => ({ ...values, [Key.target]: "" }))
+  }, [isLimitOrder, setValues])
+
   /* simulation */
   const { pair } = whitelist[token] ?? {}
   const reverse = form.changed === Key.value2
@@ -111,14 +131,44 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
   const simulation = useSimulate({ ...simulationParams, pair, reverse, type })
   const { simulated, loading: simulating, error } = simulation
 
-  /* on simulate */
+  /* change another amount on simulate */
   useEffect(() => {
     const key = reverse ? Key.value1 : Key.value2
     const symbol = reverse ? symbol1 : symbol2
-    const next = simulated ? lookup(simulated.amount, symbol) : error && ""
+    const targetAmount = {
+      [Type.BUY]: target
+        ? reverse
+          ? times(value2, target)
+          : div(value1, target)
+        : "",
+      [Type.SELL]: target
+        ? reverse
+          ? div(value2, target)
+          : times(value1, target)
+        : "",
+    }[type]
+
+    const next = isLimitOrder
+      ? decimal(targetAmount, dp(symbol))
+      : simulated
+      ? lookup(simulated.amount, symbol)
+      : error && ""
+
     // Safe to use as deps
     !isNil(next) && setValues((values) => ({ ...values, [key]: next }))
-  }, [simulated, reverse, setValues, symbol1, symbol2, error])
+
+    // eslint-disable-next-line
+  }, [
+    isLimitOrder,
+    simulated,
+    reverse,
+    setValues,
+    type,
+    target,
+    symbol1,
+    symbol2,
+    error,
+  ])
 
   /* render:form */
   const balance = find(balanceKey, token1)
@@ -133,6 +183,17 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
   }[type]
 
   const fields = getFields({
+    [Key.target]: {
+      label: "Target Price",
+      input: {
+        type: "number",
+        step: step(UUSD),
+        placeholder: placeholder(UUSD),
+        autoFocus: true,
+      },
+      unit: `${UST} per ${symbol}`,
+      help: { title: "Current Price", content: format(find(priceKey, token)) },
+    },
     [Key.value1]: {
       label: "From",
       input: {
@@ -189,6 +250,8 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
 
   const contents = !(value1 && token)
     ? undefined
+    : isLimitOrder
+    ? []
     : [
         {
           title: (
@@ -214,44 +277,77 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
 
   /* submit */
   const newContractMsg = useNewContractMsg()
-  const asset = toToken({ token: token1, amount: amount1 })
+  const asset1 = toToken({ token: token1, amount: amount1 })
+  const asset2 = toToken({ token: token2, amount: amount2 })
   const swap = {
     belief_price: belief,
     max_spread: String(slippage),
   }
 
-  const data = {
-    [Type.BUY]: [
-      newContractMsg(
-        pair,
-        { swap: { ...swap, offer_asset: asset } },
-        { amount: amount1, denom: UUSD }
-      ),
-    ],
-    [Type.SELL]: [
-      newContractMsg(token, {
-        send: { amount: amount1, contract: pair, msg: toBase64({ swap }) },
-      }),
-    ],
-  }[type]
+  const limitOrderData = limitOrderContract
+    ? {
+        [Type.BUY]: [
+          newContractMsg(
+            limitOrderContract,
+            { submit_order: { offer_asset: asset1, ask_asset: asset2 } },
+            { amount: amount1, denom: UUSD }
+          ),
+        ],
+        [Type.SELL]: [
+          newContractMsg(token, {
+            send: {
+              contract: limitOrderContract,
+              amount: amount1,
+              msg: toBase64({ submit_order: { ask_asset: asset2 } }),
+            },
+          }),
+        ],
+      }[type]
+    : []
 
-  const messages = !simulating
-    ? error
-      ? ["Simulation failed"]
-      : undefined
+  const data = isLimitOrder
+    ? limitOrderData
+    : {
+        [Type.BUY]: [
+          newContractMsg(
+            pair,
+            { swap: { ...swap, offer_asset: asset1 } },
+            { amount: amount1, denom: UUSD }
+          ),
+        ],
+        [Type.SELL]: [
+          newContractMsg(token, {
+            send: { amount: amount1, contract: pair, msg: toBase64({ swap }) },
+          }),
+        ],
+      }[type]
+
+  const messages = simulating
+    ? undefined
+    : error
+    ? ["Simulation failed"]
+    : isLimitOrder && !target
+    ? ["Target price is required"]
     : undefined
 
   const disabled = invalid || simulating || !!messages?.length
 
   /* result */
-  const parseTx = useTradeReceipt(type, simulated?.price)
+  const parseTrade = useTradeReceipt(type, simulated?.price)
+  const parseLimitOrder = useLimitOrderReceipt(type)
+  const parseTx = isLimitOrder ? parseLimitOrder : parseTrade
 
   const container = { tab, attrs, contents, data, disabled, messages, parseTx }
   const tax = { pretax: uusd, deduct: type === Type.SELL }
 
   return (
     <FormContainer {...container} {...tax}>
-      <SetSlippageTolerance state={slippageState} error={slippageError} />
+      <div className={styles.header}>
+        <ToggleLimitOrder state={limitOrderState} />
+        <SetSlippageTolerance state={slippageState} error={slippageError} />
+      </div>
+
+      {isLimitOrder && <FormGroup {...fields[Key.target]} />}
       <FormGroup {...fields[Key.value1]} />
       <FormIcon name="arrow_downward" />
       <FormGroup {...fields[Key.value2]} />
