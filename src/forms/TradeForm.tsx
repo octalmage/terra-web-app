@@ -182,9 +182,10 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
     [Type.SELL]: lookup(balance, symbol),
   }[type]
 
+  const targetLabel = { [Type.BUY]: "Bid", [Type.SELL]: "Ask" }[type]
   const fields = getFields({
     [Key.target]: {
-      label: "Target Price",
+      label: `${targetLabel} Price`,
       input: {
         type: "number",
         step: step(UUSD),
@@ -192,7 +193,10 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
         autoFocus: true,
       },
       unit: `${UST} per ${symbol}`,
-      help: { title: "Current Price", content: format(find(priceKey, token)) },
+      help: {
+        title: "Terraswap Price",
+        content: format(find(priceKey, token)),
+      },
     },
     [Key.value1]: {
       label: "From",
@@ -327,7 +331,7 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
     : error
     ? ["Simulation failed"]
     : isLimitOrder && !target
-    ? ["Target price is required"]
+    ? [`${targetLabel} price is required`]
     : undefined
 
   const disabled = invalid || simulating || !!messages?.length

@@ -12,8 +12,8 @@ import NoAssets from "./NoAssets"
 interface OrderDetails extends Order {
   offerAsset: Asset
   askAsset: Asset
-  targetPrice: string
-  currentPrice: string
+  limitOrderPrice: string
+  terraswapPrice: string
 }
 
 interface Props {
@@ -55,14 +55,14 @@ const Orders = ({ loading, dataSource, ...props }: Props) => {
               align: "right",
             },
             {
-              key: "targetPrice",
-              title: "Target Price",
+              key: "limitOrderPrice",
+              title: "Limit Order Price",
               render: (value) => `${format(value)} ${UST}`,
               align: "right",
             },
             {
-              key: "currentPrice",
-              title: "Current Price",
+              key: "terraswapPrice",
+              title: "Terraswap Price",
               render: (value) => `${format(value)} ${UST}`,
               align: "right",
             },

@@ -32,12 +32,12 @@ const useMyOrders = () => {
 
         const type = offerAsset.token === UUSD ? Type.BUY : Type.SELL
 
-        const targetPrice = {
+        const limitOrderPrice = {
           [Type.BUY]: div(offerAsset.amount, askAsset.amount),
           [Type.SELL]: div(askAsset.amount, offerAsset.amount),
         }[type]
 
-        const currentPrice = {
+        const terraswapPrice = {
           [Type.BUY]: find(priceKey, askAsset.token),
           [Type.SELL]: find(priceKey, offerAsset.token),
         }[type]
@@ -49,8 +49,8 @@ const useMyOrders = () => {
           ...order,
           offerAsset,
           askAsset,
-          targetPrice,
-          currentPrice,
+          limitOrderPrice,
+          terraswapPrice,
           offerValue,
         }
       })
