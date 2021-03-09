@@ -1,7 +1,6 @@
 import { UST, UUSD } from "../../constants"
 import MESSAGE from "../../lang/MESSAGE.json"
 import { format, formatAsset } from "../../libs/parse"
-import { capitalize } from "../../libs/utils"
 import { getPath, MenuKey } from "../../routes"
 
 import Card from "../../components/Card"
@@ -11,9 +10,8 @@ import DashboardActions from "../../components/DashboardActions"
 import NoAssets from "./NoAssets"
 
 interface OrderDetails extends Order {
-  type: string
-  orderAsset: Asset
   offerAsset: Asset
+  askAsset: Asset
   targetPrice: string
   currentPrice: string
 }
@@ -45,10 +43,15 @@ const Orders = ({ loading, dataSource, ...props }: Props) => {
               bold: true,
             },
             {
-              key: "orderAsset",
-              title: "Order Asset",
-              render: ({ amount, symbol }, { type }: { type: string }) =>
-                [capitalize(type), formatAsset(amount, symbol)].join(" "),
+              key: "offerAsset",
+              title: "Offer Asset",
+              render: ({ amount, symbol }) => formatAsset(amount, symbol),
+              align: "right",
+            },
+            {
+              key: "askAsset",
+              title: "Ask Asset",
+              render: ({ amount, symbol }) => formatAsset(amount, symbol),
               align: "right",
             },
             {
@@ -61,12 +64,6 @@ const Orders = ({ loading, dataSource, ...props }: Props) => {
               key: "currentPrice",
               title: "Current Price",
               render: (value) => `${format(value)} ${UST}`,
-              align: "right",
-            },
-            {
-              key: "offerAsset",
-              title: "Offer/Ask Asset",
-              render: ({ amount, symbol }) => formatAsset(amount, symbol),
               align: "right",
             },
             {

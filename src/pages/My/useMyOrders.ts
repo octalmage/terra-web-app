@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { UUSD } from "../../constants"
 import useContractQuery from "../../graphql/useContractQuery"
 import { useContractsAddress, useContract, useNetwork } from "../../hooks"
@@ -14,35 +15,40 @@ const useMyOrders = () => {
   const { parseToken } = useContractsAddress()
   const { find } = useContract()
   const { parsed, result } = useQueryOrders()
-  const loading = result.loading || loadingPrice
+  const { loading: loadingOrders, refetch } = result
+  const loading = loadingOrders || loadingPrice
+
+  useEffect(() => {
+    refetch()
+  }, [refetch])
 
   const dataSource = !parsed
     ? []
     : parsed?.orders.map((order) => {
         const { offer_asset, ask_asset } = order
-        const offer = parseToken(offer_asset)
-        const ask = parseToken(ask_asset)
 
-        const type = offer.token === UUSD ? Type.BUY : Type.SELL
+        const offerAsset = parseToken(offer_asset)
+        const askAsset = parseToken(ask_asset)
 
-        const orderAsset = { [Type.BUY]: ask, [Type.SELL]: offer }[type]
-        const offerAsset = { [Type.BUY]: offer, [Type.SELL]: ask }[type]
-
-        const currentPrice = find(priceKey, orderAsset.token)
-
-        const offerPrice = find(priceKey, offer.token)
-        const offerValue = times(offerPrice, offer.amount)
+        const type = offerAsset.token === UUSD ? Type.BUY : Type.SELL
 
         const targetPrice = {
-          [Type.BUY]: div(offer.amount, ask.amount),
-          [Type.SELL]: div(ask.amount, offer.amount),
+          [Type.BUY]: div(offerAsset.amount, askAsset.amount),
+          [Type.SELL]: div(askAsset.amount, offerAsset.amount),
         }[type]
+
+        const currentPrice = {
+          [Type.BUY]: find(priceKey, askAsset.token),
+          [Type.SELL]: find(priceKey, offerAsset.token),
+        }[type]
+
+        const offerPrice = find(priceKey, offerAsset.token)
+        const offerValue = times(offerPrice, offerAsset.amount)
 
         return {
           ...order,
-          type,
-          orderAsset,
           offerAsset,
+          askAsset,
           targetPrice,
           currentPrice,
           offerValue,
