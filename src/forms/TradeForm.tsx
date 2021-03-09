@@ -347,10 +347,10 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
         <SetSlippageTolerance state={slippageState} error={slippageError} />
       </div>
 
-      {isLimitOrder && <FormGroup {...fields[Key.target]} />}
       <FormGroup {...fields[Key.value1]} />
       <FormIcon name="arrow_downward" />
       <FormGroup {...fields[Key.value2]} />
+      {isLimitOrder && <FormGroup {...fields[Key.target]} />}
       <PriceChart token={token} symbol={symbol} />
     </FormContainer>
   )
