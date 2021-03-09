@@ -13,7 +13,7 @@ import NoAssets from "./NoAssets"
 interface OrderDetails extends Order {
   offerAsset: Asset
   askAsset: Asset
-  limitOrderPrice: string
+  limitPrice: string
   terraswapPrice: string
 }
 
@@ -43,20 +43,14 @@ const Orders = ({ loading, dataSource, total, more }: Props) => {
               bold: true,
             },
             {
-              key: "offerAsset",
-              title: "Offer Asset",
-              render: ({ amount, symbol }) => formatAsset(amount, symbol),
-              align: "right",
-            },
-            {
               key: "askAsset",
-              title: "Ask Asset",
+              title: "Order",
               render: ({ amount, symbol }) => formatAsset(amount, symbol),
               align: "right",
             },
             {
-              key: "limitOrderPrice",
-              title: "Limit Order Price",
+              key: "limitPrice",
+              title: "Limit Price",
               render: (value) => `${format(value)} ${UST}`,
               align: "right",
             },
@@ -64,6 +58,12 @@ const Orders = ({ loading, dataSource, total, more }: Props) => {
               key: "terraswapPrice",
               title: "Terraswap Price",
               render: (value) => `${format(value)} ${UST}`,
+              align: "right",
+            },
+            {
+              key: "offerAsset",
+              title: "Order Value",
+              render: ({ amount, symbol }) => formatAsset(amount, symbol),
               align: "right",
             },
             {
