@@ -54,7 +54,7 @@
     "LimitOrders": "List of trade orders to be executed at the limit price",
     "LimitPrice": "Price at which the order will be executed",
     "OrderValue": "Value of the limit order",
-    "TotalLockedValue": "Total value of locked assets in unfilled limit orders"
+    "TotalLockedValue": "Total value of assets locked in unfilled limit orders"
   },
 
   "Forms": {
