@@ -28,11 +28,11 @@ export default (type: Type, simulatedPrice?: string) => (logs: TxLog[]) => {
 
   const priceContents = {
     [Type.BUY]: {
-      title: `Price per ${lookupSymbol(rtnSymbol)}`,
+      title: `Limit price per ${lookupSymbol(rtnSymbol)}`,
       content: `${format(price)} ${lookupSymbol(offerSymbol)}`,
     },
     [Type.SELL]: {
-      title: `Price per ${lookupSymbol(offerSymbol)}`,
+      title: `Limit price per ${lookupSymbol(offerSymbol)}`,
       content: `${format(price)} ${lookupSymbol(rtnSymbol)}`,
     },
   }[type]
@@ -41,7 +41,7 @@ export default (type: Type, simulatedPrice?: string) => (logs: TxLog[]) => {
     title: "Locked",
     content: formatAsset(offer.amount, offerSymbol),
     children: [
-      { title: "Expected", content: formatAsset(rtn.amount, rtnSymbol) },
+      { title: "Order Value", content: formatAsset(rtn.amount, rtnSymbol) },
     ],
   }
 

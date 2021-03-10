@@ -17,7 +17,7 @@ export default () => (logs: TxLog[]) => {
   }
 
   const refundContents = {
-    title: "Returned Amount",
+    title: "Returned Asset",
     content: formatAsset(refund.amount, symbol),
   }
 
