@@ -45,12 +45,18 @@ const Orders = ({ loading, dataSource, total, more }: Props) => {
               key: "order_id",
               title: "ID",
               bold: true,
+              align: "center",
+            },
+            {
+              key: "type",
+              title: "Order Type",
+              render: capitalize,
+              align: "center",
             },
             {
               key: "asset",
-              title: "Order",
-              render: ({ amount, symbol }, { type }) =>
-                [capitalize(type), formatAsset(amount, symbol)].join(" "),
+              title: "Order Amount",
+              render: ({ amount, symbol }) => formatAsset(amount, symbol),
               align: "right",
             },
             {

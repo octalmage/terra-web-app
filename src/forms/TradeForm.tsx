@@ -201,7 +201,9 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
       },
     },
     [Key.value1]: {
-      label: "From",
+      label: !isLimitOrder
+        ? "From"
+        : { [Type.BUY]: "Order Value", [Type.SELL]: "Order Amount" }[type],
       input:
         isLimitOrder && buying
           ? undefined
@@ -228,7 +230,9 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
     },
 
     [Key.value2]: {
-      label: "To",
+      label: !isLimitOrder
+        ? "To"
+        : { [Type.BUY]: "Order Amount", [Type.SELL]: "Order Value" }[type],
       input:
         isLimitOrder && selling
           ? undefined
