@@ -30,7 +30,9 @@ const Orders = ({ loading, dataSource, total, more }: Props) => {
   const dataExists = !!dataSource.length
   const description = dataExists && (
     <Dl
-      list={[{ title: "Total Order Value", content: formatAsset(total, UUSD) }]}
+      list={[
+        { title: "Total Locked Value", content: formatAsset(total, UUSD) },
+      ]}
     />
   )
 
