@@ -1,6 +1,7 @@
 import { UST, UUSD } from "../../constants"
 import MESSAGE from "../../lang/MESSAGE.json"
 import { format, formatAsset } from "../../libs/parse"
+import { capitalize } from "../../libs/utils"
 import { getPath, MenuKey } from "../../routes"
 
 import Card from "../../components/Card"
@@ -11,8 +12,9 @@ import DashboardActions from "../../components/DashboardActions"
 import NoAssets from "./NoAssets"
 
 interface OrderDetails extends Order {
-  offerAsset: Asset
-  askAsset: Asset
+  type: string
+  asset: Asset
+  uusd: Asset
   limitPrice: string
   terraswapPrice: string
 }
@@ -43,9 +45,10 @@ const Orders = ({ loading, dataSource, total, more }: Props) => {
               bold: true,
             },
             {
-              key: "askAsset",
+              key: "asset",
               title: "Order",
-              render: ({ amount, symbol }) => formatAsset(amount, symbol),
+              render: ({ amount, symbol }, { type }) =>
+                [capitalize(type), formatAsset(amount, symbol)].join(" "),
               align: "right",
             },
             {
@@ -61,7 +64,7 @@ const Orders = ({ loading, dataSource, total, more }: Props) => {
               align: "right",
             },
             {
-              key: "offerAsset",
+              key: "uusd",
               title: "Order Value",
               render: ({ amount, symbol }) => formatAsset(amount, symbol),
               align: "right",

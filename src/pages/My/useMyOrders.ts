@@ -27,6 +27,9 @@ const useMyOrders = () => {
 
     const type = offerAsset.token === UUSD ? Type.BUY : Type.SELL
 
+    const asset = { [Type.BUY]: askAsset, [Type.SELL]: offerAsset }[type]
+    const uusd = { [Type.BUY]: offerAsset, [Type.SELL]: askAsset }[type]
+
     const limitPrice = {
       [Type.BUY]: div(offerAsset.amount, askAsset.amount),
       [Type.SELL]: div(askAsset.amount, offerAsset.amount),
@@ -42,8 +45,9 @@ const useMyOrders = () => {
 
     return {
       ...order,
-      offerAsset,
-      askAsset,
+      type,
+      asset,
+      uusd,
       limitPrice,
       terraswapPrice,
       offerValue,
