@@ -149,7 +149,7 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
     }[type]
 
     const next = isLimitOrder
-      ? decimal(targetAmount || "0", dp(symbol))
+      ? decimal(targetAmount, dp(symbol))
       : simulated
       ? lookup(simulated.amount, symbol)
       : error && ""
@@ -220,16 +220,13 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
 
     [Key.value2]: {
       label: "To",
-      input: isLimitOrder
-        ? undefined
-        : {
-            type: "number",
-            step: step(symbol2),
-            placeholder: placeholder(symbol2),
-            disabled: !reverse && simulating,
-            ref: value2Ref,
-          },
-      value: isLimitOrder ? value2 : undefined,
+      input: {
+        type: "number",
+        step: step(symbol2),
+        placeholder: placeholder(symbol2),
+        disabled: !reverse && simulating,
+        ref: value2Ref,
+      },
       unit: {
         [Type.BUY]: select.button,
         [Type.SELL]: lookupSymbol(symbol2),
