@@ -1,13 +1,14 @@
 import { UST, UUSD } from "../../constants"
 import MESSAGE from "../../lang/MESSAGE.json"
+import Tooltip from "../../lang/Tooltip.json"
 import { format, formatAsset } from "../../libs/parse"
 import { capitalize } from "../../libs/utils"
 import { getPath, MenuKey } from "../../routes"
-
 import Card from "../../components/Card"
 import Table from "../../components/Table"
 import Dl from "../../components/Dl"
 import Button from "../../components/Button"
+import { TooltipIcon } from "../../components/Tooltip"
 import DashboardActions from "../../components/DashboardActions"
 import NoAssets from "./NoAssets"
 
@@ -27,6 +28,10 @@ interface Props {
 }
 
 const Orders = ({ loading, dataSource, total, more }: Props) => {
+  const renderTooltip = (value: string, tooltip: string) => (
+    <TooltipIcon content={tooltip}>{formatAsset(value, UUSD)}</TooltipIcon>
+  )
+
   const dataExists = !!dataSource.length
   const description = dataExists && (
     <Dl
@@ -37,7 +42,11 @@ const Orders = ({ loading, dataSource, total, more }: Props) => {
   )
 
   return (
-    <Card title="Limit Orders" description={description} loading={loading}>
+    <Card
+      title={renderTooltip("Limit Orders", Tooltip.My.LimitOrders)}
+      description={description}
+      loading={loading}
+    >
       {dataExists ? (
         <Table
           columns={[
@@ -61,7 +70,7 @@ const Orders = ({ loading, dataSource, total, more }: Props) => {
             },
             {
               key: "limitPrice",
-              title: "Limit Price",
+              title: renderTooltip("Limit Price", Tooltip.My.LimitPrice),
               render: (value) => `${format(value)} ${UST}`,
               align: "right",
             },
@@ -73,7 +82,7 @@ const Orders = ({ loading, dataSource, total, more }: Props) => {
             },
             {
               key: "uusd",
-              title: "Order Value",
+              title: renderTooltip("Order Value", Tooltip.My.OrderValue),
               render: ({ amount, symbol }) => formatAsset(amount, symbol),
               align: "right",
             },
