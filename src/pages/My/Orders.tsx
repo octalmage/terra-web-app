@@ -36,7 +36,13 @@ const Orders = ({ loading, dataSource, total, more }: Props) => {
   const description = dataExists && (
     <Dl
       list={[
-        { title: "Total Locked Value", content: formatAsset(total, UUSD) },
+        {
+          title: renderTooltip(
+            "Total Locked Value",
+            Tooltip.My.TotalLockedValue
+          ),
+          content: formatAsset(total, UUSD),
+        },
       ]}
     />
   )
