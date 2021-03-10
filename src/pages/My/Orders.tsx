@@ -29,7 +29,7 @@ interface Props {
 
 const Orders = ({ loading, dataSource, total, more }: Props) => {
   const renderTooltip = (value: string, tooltip: string) => (
-    <TooltipIcon content={tooltip}>{formatAsset(value, UUSD)}</TooltipIcon>
+    <TooltipIcon content={tooltip}>{value}</TooltipIcon>
   )
 
   const dataExists = !!dataSource.length

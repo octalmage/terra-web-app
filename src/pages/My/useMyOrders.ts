@@ -23,17 +23,17 @@ const useMyOrders = () => {
     const { filled_offer_amount, filled_ask_amount } = order
     const { offer_asset, ask_asset } = order
 
-    const { amount: offerAmount, token: offerToken } = parseToken(offer_asset)
-    const { amount: askAmount, token: askToken } = parseToken(ask_asset)
+    const offerToken = parseToken(offer_asset)
+    const askToken = parseToken(ask_asset)
 
     const offerAsset = {
-      amount: minus(offerAmount, filled_offer_amount),
-      token: offerToken,
+      ...offerToken,
+      amount: minus(offerToken.amount, filled_offer_amount),
     }
 
     const askAsset = {
-      amount: minus(askAmount, filled_ask_amount),
-      token: askToken,
+      ...askToken,
+      amount: minus(askToken.amount, filled_ask_amount),
     }
 
     const type = offerAsset.token === UUSD ? Type.BUY : Type.SELL
