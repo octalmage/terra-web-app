@@ -123,7 +123,9 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
 
   /* simulation */
   const { pair } = whitelist[token] ?? {}
-  const reverse = form.changed === Key.value2
+  const buying = type === Type.BUY
+  const selling = type === Type.SELL
+  const reverse = form.changed === Key.value2 || (isLimitOrder && buying)
   const simulationParams = !reverse
     ? { amount: amount1, token: token1 }
     : { amount: amount2, token: token2 }
@@ -149,7 +151,7 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
     }[type]
 
     const next = isLimitOrder
-      ? decimal(targetAmount, dp(symbol))
+      ? decimal(targetAmount || "0", dp(symbol))
       : simulated
       ? lookup(simulated.amount, symbol)
       : error && ""
@@ -200,19 +202,26 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
     },
     [Key.value1]: {
       label: "From",
-      input: {
-        type: "number",
-        step: step(symbol1),
-        placeholder: placeholder(symbol1),
-        disabled: reverse && simulating,
-        autoFocus: true,
-        ref: value1Ref,
-      },
+      input:
+        isLimitOrder && buying
+          ? undefined
+          : {
+              type: "number",
+              step: step(symbol1),
+              placeholder: placeholder(symbol1),
+              disabled: reverse && simulating,
+              autoFocus: true,
+              ref: value1Ref,
+            },
+      value: isLimitOrder && buying ? value1 : undefined,
       unit: {
         [Type.BUY]: lookupSymbol(symbol1),
         [Type.SELL]: delisted ? symbol1 : select.button,
       }[type],
-      max: gt(max, 0) ? () => setValue(Key.value1, max) : undefined,
+      max:
+        (isLimitOrder && buying) || !gt(max, 0)
+          ? undefined
+          : () => setValue(Key.value1, max),
       assets: type === Type.SELL && select.assets,
       help: renderBalance(find(balanceKey, token1), symbol1),
       focused: type === Type.SELL && select.isOpen,
@@ -220,13 +229,17 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
 
     [Key.value2]: {
       label: "To",
-      input: {
-        type: "number",
-        step: step(symbol2),
-        placeholder: placeholder(symbol2),
-        disabled: !reverse && simulating,
-        ref: value2Ref,
-      },
+      input:
+        isLimitOrder && selling
+          ? undefined
+          : {
+              type: "number",
+              step: step(symbol2),
+              placeholder: placeholder(symbol2),
+              disabled: !reverse && simulating,
+              ref: value2Ref,
+            },
+      value: isLimitOrder && selling ? value2 : undefined,
       unit: {
         [Type.BUY]: select.button,
         [Type.SELL]: lookupSymbol(symbol2),
@@ -351,10 +364,30 @@ const TradeForm = ({ type, tab }: { type: Type; tab: Tab }) => {
         <SetSlippageTolerance state={slippageState} error={slippageError} />
       </div>
 
-      <FormGroup {...fields[Key.value1]} />
-      <FormIcon name="arrow_downward" />
-      <FormGroup {...fields[Key.value2]} />
-      {isLimitOrder && <FormGroup {...fields[Key.target]} />}
+      {isLimitOrder ? (
+        {
+          [Type.BUY]: (
+            <>
+              <FormGroup {...fields[Key.target]} />
+              <FormGroup {...fields[Key.value2]} />
+              <FormGroup {...fields[Key.value1]} />
+            </>
+          ),
+          [Type.SELL]: (
+            <>
+              <FormGroup {...fields[Key.target]} />
+              <FormGroup {...fields[Key.value1]} />
+              <FormGroup {...fields[Key.value2]} />
+            </>
+          ),
+        }[type]
+      ) : (
+        <>
+          <FormGroup {...fields[Key.value1]} />
+          <FormIcon name="arrow_downward" />
+          <FormGroup {...fields[Key.value2]} />
+        </>
+      )}
       <PriceChart token={token} symbol={symbol} />
     </FormContainer>
   )
