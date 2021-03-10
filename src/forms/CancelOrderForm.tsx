@@ -1,4 +1,5 @@
 import useNewContractMsg from "../terra/useNewContractMsg"
+import { minus } from "../libs/math"
 import { useContractsAddress } from "../hooks"
 import Count from "../components/Count"
 import { MenuKey } from "../pages/LimitOrder"
@@ -11,7 +12,7 @@ interface Props {
 }
 
 const CancelOrderForm = ({ order, contract }: Props) => {
-  const { order_id, offer_asset } = order
+  const { order_id, offer_asset, filled_offer_amount } = order
 
   /* context */
   const { parseToken } = useContractsAddress()
@@ -25,7 +26,9 @@ const CancelOrderForm = ({ order, contract }: Props) => {
     },
     {
       title: "Returned Assets",
-      content: <Count symbol={symbol}>{amount}</Count>,
+      content: (
+        <Count symbol={symbol}>{minus(amount, filled_offer_amount)}</Count>
+      ),
     },
   ]
 

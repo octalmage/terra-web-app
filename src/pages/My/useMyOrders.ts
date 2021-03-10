@@ -5,7 +5,7 @@ import useContractQuery from "../../graphql/useContractQuery"
 import { useContractsAddress, useContract, useNetwork } from "../../hooks"
 import { useCombineKeys, useWallet } from "../../hooks"
 import { PriceKey } from "../../hooks/contractKeys"
-import { div, sum, times } from "../../libs/math"
+import { div, minus, sum, times } from "../../libs/math"
 import { Type } from "../Trade"
 
 const useMyOrders = () => {
@@ -20,10 +20,21 @@ const useMyOrders = () => {
   const loading = loadingOrders || loadingPrice
 
   const dataSource = orders.map((order) => {
+    const { filled_offer_amount, filled_ask_amount } = order
     const { offer_asset, ask_asset } = order
 
-    const offerAsset = parseToken(offer_asset)
-    const askAsset = parseToken(ask_asset)
+    const { amount: offerAmount, token: offerToken } = parseToken(offer_asset)
+    const { amount: askAmount, token: askToken } = parseToken(ask_asset)
+
+    const offerAsset = {
+      amount: minus(offerAmount, filled_offer_amount),
+      token: offerToken,
+    }
+
+    const askAsset = {
+      amount: minus(askAmount, filled_ask_amount),
+      token: askToken,
+    }
 
     const type = offerAsset.token === UUSD ? Type.BUY : Type.SELL
 
